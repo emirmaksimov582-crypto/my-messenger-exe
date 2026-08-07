@@ -1,0 +1,19 @@
+name: Build Clean EXE
+on: [workflow_dispatch] # Запуск вручную кнопкой с телефона
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - name: Install Nativefier
+        run: npm install -g nativefier
+
+      - name: Build Desktop App
+        run: |
+          nativefier --name "MyMessenger" "https://crystal-nexus-stream.lovable.app/" --platform "windows" --arch "x64" --single-instance --hide-window-frame --disable-context-menu --disable-dev-tools
+
+      - name: Upload EXE Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: Windows-EXE-App
+          path: MyMessenger-win32-x64/
