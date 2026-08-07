@@ -1,19 +1,58 @@
-name: Build Clean EXE
-on: [workflow_dispatch] # Запуск вручную кнопкой с телефона
+name: Build Clean Single EXE with Custom Icon
+on: [workflow_dispatch]
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
+      - name: Checkout Repository Files
+        uses: actions/checkout@v4 # Этот шаг обязателен, чтобы робот увидел вашу загруженную иконку
+
       - name: Install Nativefier
         run: npm install -g nativefier
 
-      - name: Build Desktop App
+      - name: Build Desktop App Folder
         run: |
-          nativefier --name "MyMessenger" "https://crystal-nexus-stream.lovable.app/" --platform "windows" --arch "x64" --single-instance --hide-window-frame --disable-context-menu --disable-dev-tools
+          nativefier --name "MyMessenger" "https://crystal-nexus-stream.lovable.app/" --platform "windows" --arch "x64" --single-instance --disable-context-menu --disable-dev-tools --icon icon.ico
 
-      - name: Upload EXE Package
+      - name: Install Enigma Virtual Box
+        run: |
+          choco install enigmaruntime -y
+
+      - name: Pack Everything into Single EXE
+        run: |
+          cat << 'EOF' > box.evb
+          <Enigma_Virtual_Box_Project>
+            <Variables/>
+            <Options>
+              <ShareProcess>false</ShareProcess>
+              <MapFiles>true</MapFiles>
+              <AllowRunningInSandbox>true</AllowRunningInSandbox>
+            </Options>
+            <Files>
+              <InputFile>D:\a\my-messenger-exe\my-messenger-exe\MyMessenger-win32-x64\MyMessenger.exe</InputFile>
+              <OutputFile>D:\a\my-messenger-exe\my-messenger-exe\MyMessenger_Single.exe</OutputFile>
+              <Files>
+                <File>
+                  <Type>2</Type>
+                  <Name>%DEFAULT folder%</Name>
+                  <Files>
+                    <File>
+                      <Type>3</Type>
+                      <Name>MyMessenger-win32-x64</Name>
+                    </File>
+                  </Files>
+                </File>
+              </Files>
+            </Files>
+          </Enigma_Virtual_Box_Project>
+          EOF
+          
+          & "C:\Program Files (x86)\Enigma Virtual Box\enigmavbcli.exe" box.evb
+
+      - name: Upload Single EXE File
         uses: actions/upload-artifact@v4
         with:
-          name: Windows-EXE-App
-          path: MyMessenger-win32-x64/
+          name: Premium-Single-EXE
+          path: MyMessenger_Single.exe
+
